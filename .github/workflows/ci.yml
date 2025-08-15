@@ -1,4 +1,4 @@
-name: CI
+name: E2E Tests
 
 on:
   push:
@@ -25,7 +25,34 @@ jobs:
           pip install -r requirements.txt
           playwright install
 
-      - name: Run tests
+      - name: Run Playwright tests with HTML report
         run: |
-          python -m pytest -v tests/
+          mkdir -p reports
+          mkdir -p artifacts/screenshots artifacts/videos
+          pytest \
+            --html=reports/report.html \
+            --self-contained-html \
+            --video on \
+            --screenshot on \
+            --disable-warnings -v
 
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report
+          path: reports/report.html
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: artifacts/screenshots
+
+      - name: Upload videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: videos
+          path: artifacts/videos
