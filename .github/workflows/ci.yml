@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p reports
           mkdir -p artifacts/screenshots artifacts/videos
-          python -m pytest tests/ \
+          pytest e2e/tests/ \
             --html=reports/report.html \
             --self-contained-html \
             --video on \
