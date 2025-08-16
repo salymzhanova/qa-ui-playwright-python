@@ -1,4 +1,4 @@
-name: E2E Tests
+name: E2E
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  ui-tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,18 +31,18 @@ jobs:
           mkdir -p reports
           mkdir -p artifacts/screenshots artifacts/videos
           pytest e2e/tests/ \
-            --html=reports/report.html \
+            --html=reports/ui_report.html \
             --self-contained-html \
             --video on \
             --screenshot on \
             --disable-warnings -v
 
-      - name: Upload HTML report
+      - name: Upload UI HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: html-report
-          path: reports/report.html
+          name: ui-html-report
+          path: reports/ui_report.html
 
       - name: Upload screenshots
         if: always()
@@ -56,4 +56,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: videos
-          path: artifacts/videos
+          path: artif
