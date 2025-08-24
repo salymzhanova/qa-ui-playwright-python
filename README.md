@@ -16,5 +16,4 @@ python3 -m venv venv
 source venv/bin/activate
 pip install pytest pytest-playwright
 playwright install
-source venv/bin/activate
 pytest
