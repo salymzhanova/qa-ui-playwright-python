@@ -5,3 +5,5 @@ venv/
 *.pyc
 artifacts/
 reports/
+.DS_Store
+
