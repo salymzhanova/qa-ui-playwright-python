@@ -22,3 +22,11 @@ class InventoryPage:
 
             # Raise a clear runtime error
             raise RuntimeError(f"Failed to open first product: {e}") from e
+
+    def get_first_product_name(self):
+        """Return the visible name of the first product on the inventory list."""
+        return self.page.locator(".inventory_item .inventory_item_name").first.inner_text()
+
+    def get_first_product_price(self):
+        """Return the visible price text of the first product on the inventory list."""
+        return self.page.locator(".inventory_item .inventory_item_price").first.inner_text()
