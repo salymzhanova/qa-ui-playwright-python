@@ -18,10 +18,8 @@ def test_first_product_details(page):
     assert page.locator(".inventory_details_name").is_visible()
 
 @pytest.mark.order(2)
-def test_verify_consistent_product_details(page):
-    login_page = LoginPage(page)
-    page.goto(BASE_URL)
-    login_page.login(STANDARD_USER)
+def test_verify_consistent_product_details(logged_in_page):
+    page = logged_in_page
 
     inventory = InventoryPage(page)
     first_product_name = inventory.get_first_product_name()
