@@ -31,18 +31,34 @@ def page(browser):
     try:
         context.close()
     except Exception:
-        pass
+        import os
+        import pytest
+
+        # Ensure artifacts folder exists for screenshots/videos
+        os.makedirs("artifacts/screenshots", exist_ok=True)
 
 
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    result = outcome.get_result()
-    if result.when == "call" and result.failed:
-        page = item.funcargs.get("page", None)
-        if page:
-            try:
-                page.screenshot(path=f"artifacts/screenshots/{item.name}.png")
-            except Exception:
-                # Best-effort: don't fail the test-reporting hook if screenshot fails
-                pass
+        @pytest.fixture(autouse=True)
+        def configure_page(page):
+            """Configure the plugin-provided `page` fixture for all tests.
+
+            This replaces custom `browser`/`page` fixtures and sets default timeouts.
+            """
+            # Default timeouts: 10s for actions, 15s for navigation
+            page.set_default_timeout(10000)
+            page.set_default_navigation_timeout(15000)
+            yield
+
+
+        @pytest.hookimpl(tryfirst=True, hookwrapper=True)
+        def pytest_runtest_makereport(item, call):
+            outcome = yield
+            result = outcome.get_result()
+            if result.when == "call" and result.failed:
+                page = item.funcargs.get("page", None)
+                if page:
+                    try:
+                        page.screenshot(path=f"artifacts/screenshots/{item.name}.png")
+                    except Exception:
+                        # Best-effort: don't fail the test-reporting hook if screenshot fails
+                        pass
