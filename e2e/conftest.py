@@ -1,5 +1,4 @@
 import os
-import os
 import pytest
 from playwright.sync_api import sync_playwright
 
@@ -62,3 +61,20 @@ def page(browser):
                     except Exception:
                         # Best-effort: don't fail the test-reporting hook if screenshot fails
                         pass
+
+@pytest.fixture
+def logged_in_page(page):
+    from e2e.pages.login_page import LoginPage
+    from e2e.utils.users import STANDARD_USER
+
+    login_page = LoginPage(page)
+    page.goto("https://www.saucedemo.com/")
+    login_page.login(STANDARD_USER)
+    try:
+        yield page # Test runs here
+        # Teardown code runs after test
+    finally:
+        try:
+            page.close()
+        except Exception:
+            pass
