@@ -6,4 +6,4 @@ venv/
 artifacts/
 reports/
 .DS_Store
-
+.vscode/*
