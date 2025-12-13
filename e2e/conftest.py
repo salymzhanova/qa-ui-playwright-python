@@ -2,10 +2,14 @@ import os
 import pytest
 from playwright.sync_api import sync_playwright
 
-# Ensure artifacts folder exists for screenshots/videos
-os.makedirs("artifacts/screenshots", exist_ok=True)
+ARTIFACTS = "artifacts"
+SCREENSHOTS = f"{ARTIFACTS}/screenshots"
+VIDEOS = f"{ARTIFACTS}/videos"
 
+os.makedirs(SCREENSHOTS, exist_ok=True)
+os.makedirs(VIDEOS, exist_ok=True)
 
+# Browser (session-scoped)
 @pytest.fixture(scope="session")
 def browser():
     with sync_playwright() as p:
@@ -13,68 +17,50 @@ def browser():
         yield browser
         browser.close()
 
-
+# Page (function-scoped)
 @pytest.fixture
-def page(browser):
-    # Use a fresh browser context per test to avoid shared state (cookies/localStorage)
-    context = browser.new_context()
+def page(browser, request):
+    context = browser.new_context(
+        record_video_dir=VIDEOS
+    )
     page = context.new_page()
-    # Set default timeout for actions/navigation
-    page.set_default_timeout(10000)          # 10 seconds for clicks, typing, etc.
-    page.set_default_navigation_timeout(15000)  # 15 seconds for page loads
+
+    page.set_default_timeout(10000)
+    page.set_default_navigation_timeout(15000)
+
+    # Attach page to test item so hooks can access it
+    request.node.page = page
+
     yield page
-    try:
-        page.close()
-    except Exception:
-        pass
+
+    # Close AFTER pytest_runtest_makereport runs
     try:
         context.close()
     except Exception:
-        import os
-        import pytest
+        pass
 
-        # Ensure artifacts folder exists for screenshots/videos
-        os.makedirs("artifacts/screenshots", exist_ok=True)
+# Screenshot on failure
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    result = outcome.get_result()
 
+    if result.when == "call" and result.failed:
+        page = item.funcargs.get("page")
+        if page:
+            screenshot_path = f"{SCREENSHOTS}/{item.name}.png"
+            try:
+                page.screenshot(path=screenshot_path, full_page=True)
+            except Exception:
+                pass
 
-        @pytest.fixture(autouse=True)
-        def configure_page(page):
-            """Configure the plugin-provided `page` fixture for all tests.
-
-            This replaces custom `browser`/`page` fixtures and sets default timeouts.
-            """
-            # Default timeouts: 10s for actions, 15s for navigation
-            page.set_default_timeout(10000)
-            page.set_default_navigation_timeout(15000)
-            yield
-
-
-        @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-        def pytest_runtest_makereport(item, call):
-            outcome = yield
-            result = outcome.get_result()
-            if result.when == "call" and result.failed:
-                page = item.funcargs.get("page", None)
-                if page:
-                    try:
-                        page.screenshot(path=f"artifacts/screenshots/{item.name}.png")
-                    except Exception:
-                        # Best-effort: don't fail the test-reporting hook if screenshot fails
-                        pass
-
+# Logged-in page fixture
 @pytest.fixture
 def logged_in_page(page):
     from e2e.pages.login_page import LoginPage
     from e2e.utils.users import STANDARD_USER
 
-    login_page = LoginPage(page)
     page.goto("https://www.saucedemo.com/")
-    login_page.login(STANDARD_USER)
-    try:
-        yield page # Test runs here
-        # Teardown code runs after test
-    finally:
-        try:
-            page.close()
-        except Exception:
-            pass
+    LoginPage(page).login(STANDARD_USER)
+
+    yield page
