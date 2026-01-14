@@ -2,6 +2,7 @@ import pytest
 from e2e.pages.login_page import LoginPage
 from e2e.pages.inventory_page import InventoryPage
 from e2e.utils.users import STANDARD_USER
+from e2e.pages.locators import InventoryPageLocators
 
 BASE_URL = "https://www.saucedemo.com/"
 INVENTORY_URL = "https://www.saucedemo.com/inventory.html"
@@ -26,8 +27,8 @@ def test_verify_consistent_product_details(logged_in_page):
     first_product_price = inventory.get_first_product_price()
     inventory.open_first_product()
 
-    detail_name = page.locator(".inventory_details_name").inner_text()
-    detail_price = page.locator(".inventory_details_price").inner_text()
+    detail_name = page.locator(InventoryPageLocators.PRODUCT_DETAILS_NAME).inner_text()
+    detail_price = page.locator(InventoryPageLocators.PRODUCT_DETAILS_PRICE).inner_text()
 
     assert first_product_name == detail_name
     assert first_product_price == detail_price
