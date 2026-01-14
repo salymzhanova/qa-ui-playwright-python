@@ -9,35 +9,22 @@ VIDEOS = f"{ARTIFACTS}/videos"
 os.makedirs(SCREENSHOTS, exist_ok=True)
 os.makedirs(VIDEOS, exist_ok=True)
 
-# Browser (session-scoped)
-@pytest.fixture(scope="session")
-def browser():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        yield browser
-        browser.close()
-
 # Page (function-scoped)
 @pytest.fixture
 def page(browser, request):
-    context = browser.new_context(
-        record_video_dir=VIDEOS
-    )
+    context = browser.new_context(record_video_dir=VIDEOS)
     page = context.new_page()
 
     page.set_default_timeout(10000)
     page.set_default_navigation_timeout(15000)
 
-    # Attach page to test item so hooks can access it
+    # Save context + page so hooks can see both
     request.node.page = page
+    request.node.context = context
 
     yield page
 
-    # Close AFTER pytest_runtest_makereport runs
-    try:
-        context.close()
-    except Exception:
-        pass
+    # Don't close here — let hook run first
 
 # Screenshot on failure
 @pytest.hookimpl(hookwrapper=True)
@@ -45,12 +32,22 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     result = outcome.get_result()
 
-    if result.when == "call" and result.failed:
-        page = item.funcargs.get("page")
-        if page:
+    if result.when == "call":
+        page = getattr(item, "page", None)
+        context = getattr(item, "context", None)
+
+        # Screenshot on failure
+        if result.failed and page:
             screenshot_path = f"{SCREENSHOTS}/{item.name}.png"
             try:
                 page.screenshot(path=screenshot_path, full_page=True)
+            except Exception:
+                pass
+
+        # Close context AFTER screenshot + video finalize
+        if context:
+            try:
+                context.close()
             except Exception:
                 pass
 
