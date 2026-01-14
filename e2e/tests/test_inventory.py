@@ -16,7 +16,7 @@ def test_first_product_details(page):
     inventory = InventoryPage(page)
     inventory.open_first_product()
 
-    assert page.locator(".inventory_details_name").is_visible()
+    assert page.locator(InventoryPageLocators.PRODUCT_DETAILS_NAME).is_visible()
 
 @pytest.mark.order(2)
 def test_verify_consistent_product_details(logged_in_page):
