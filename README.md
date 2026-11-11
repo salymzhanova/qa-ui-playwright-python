@@ -1,6 +1,3 @@
-# qa-ui-playwright-python
-Python-based UI automation with GitHub Actions CI.
-
 # QA UI Automation with Python + Playwright
 
 [![UI Tests](https://github.com/salymzhanova/qa-ui-playwright-python/actions/workflows/ci.yml/badge.svg)](https://github.com/salymzhanova/qa-ui-playwright-python/actions/workflows/ci.yml)
@@ -14,6 +11,12 @@ Python-based UI automation with GitHub Actions CI.
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install pytest pytest-playwright
-playwright install
-pytest
+pip install -r requirements.txt
+playwright install chromium
+pytest e2e/tests
+```
+
+## Notes
+- The SauceDemo credentials are the public demo ones. Override the shared
+  password with the `SAUCEDEMO_PASSWORD` environment variable if needed.
+- Never commit `.env` files or tokens; they are git-ignored.

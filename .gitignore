@@ -1,22 +1,24 @@
+# IDE / OS
 .idea/
+.vscode/
+.DS_Store
+
+# Python
 __pycache__/
+*.pyc
+.pytest_cache/
 venv/
 .venv/
-*.pyc
-artifacts/
-reports/
-.DS_Store
-.vscode/*
-# Test reports and outputs
-report.html
-*.html
-reports/
-test-results/
-playwright-report/
+
+# Secrets / local config
+.env
+.env.*
+*.pem
+*.key
 
 # Test outputs
-report.html
-*.html
+artifacts/
 reports/
+report.html
 test-results/
 playwright-report/
