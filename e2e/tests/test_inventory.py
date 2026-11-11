@@ -32,3 +32,16 @@ def test_verify_consistent_product_details(logged_in_page):
 
     assert first_product_name == detail_name
     assert first_product_price == detail_price
+
+# @pytest.mark.order(3)
+# def test_add_to_cart_increases_count(logged_in_page):
+#     inventory = InventoryPage(logged_in_page)
+
+#     # 1. Capture the state before the action
+#     initial_count = inventory.get_cart_count()
+    
+#     # 2. Perform the action
+#     inventory.add_first_available_item()
+    
+#     # 3. Verify the state change (N + 1)
+#     inventory.verify_cart_count(initial_count + 1)

@@ -7,3 +7,9 @@ artifacts/
 reports/
 .DS_Store
 .vscode/*
+# Test reports and outputs
+report.html
+*.html
+reports/
+test-results/
+playwright-report/

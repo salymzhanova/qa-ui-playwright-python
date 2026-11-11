@@ -2,12 +2,15 @@ import os
 import pytest
 from playwright.sync_api import sync_playwright
 
+
 ARTIFACTS = "artifacts"
 SCREENSHOTS = f"{ARTIFACTS}/screenshots"
 VIDEOS = f"{ARTIFACTS}/videos"
 
 os.makedirs(SCREENSHOTS, exist_ok=True)
 os.makedirs(VIDEOS, exist_ok=True)
+
+BASE_URL = "https://www.saucedemo.com/"
 
 # Page (function-scoped)
 @pytest.fixture
@@ -57,7 +60,7 @@ def logged_in_page(page):
     from e2e.pages.login_page import LoginPage
     from e2e.utils.users import STANDARD_USER
 
-    page.goto("https://www.saucedemo.com/")
+    page.goto(BASE_URL)
     LoginPage(page).login(STANDARD_USER)
 
     yield page
