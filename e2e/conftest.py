@@ -1,66 +1,58 @@
-import os
+import re
+from pathlib import Path
+
 import pytest
-from playwright.sync_api import sync_playwright
 
+from e2e.pages.login_page import LoginPage
+from e2e.utils.users import STANDARD_USER
 
-ARTIFACTS = "artifacts"
-SCREENSHOTS = f"{ARTIFACTS}/screenshots"
-VIDEOS = f"{ARTIFACTS}/videos"
-
-os.makedirs(SCREENSHOTS, exist_ok=True)
-os.makedirs(VIDEOS, exist_ok=True)
-
+ARTIFACTS = Path("artifacts")
+SCREENSHOTS = ARTIFACTS / "screenshots"
+VIDEOS = ARTIFACTS / "videos"
 BASE_URL = "https://www.saucedemo.com/"
 
-# Page (function-scoped)
+
+def _safe_name(name: str) -> str:
+    """Make a test id safe to use as a file name."""
+    return re.sub(r"[^\w.\-\[\]]+", "_", name)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Expose each phase's report on the item so fixtures can inspect the outcome."""
+    outcome = yield
+    report = outcome.get_result()
+    setattr(item, f"rep_{report.when}", report)
+
+
 @pytest.fixture
 def page(browser, request):
-    context = browser.new_context(record_video_dir=VIDEOS)
-    page = context.new_page()
+    SCREENSHOTS.mkdir(parents=True, exist_ok=True)
+    VIDEOS.mkdir(parents=True, exist_ok=True)
 
+    context = browser.new_context(record_video_dir=str(VIDEOS))
+    page = context.new_page()
     page.set_default_timeout(10000)
     page.set_default_navigation_timeout(15000)
 
-    # Save context + page so hooks can see both
-    request.node.page = page
-    request.node.context = context
-
-    yield page
-
-    # Don't close here — let hook run first
-
-# Screenshot on failure
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    result = outcome.get_result()
-
-    if result.when == "call":
-        page = getattr(item, "page", None)
-        context = getattr(item, "context", None)
-
-        # Screenshot on failure
-        if result.failed and page:
-            screenshot_path = f"{SCREENSHOTS}/{item.name}.png"
+    try:
+        yield page
+    finally:
+        report = getattr(request.node, "rep_call", None)
+        if report is not None and report.failed:
             try:
-                page.screenshot(path=screenshot_path, full_page=True)
-            except Exception:
-                pass
+                page.screenshot(
+                    path=str(SCREENSHOTS / f"{_safe_name(request.node.name)}.png"),
+                    full_page=True,
+                )
+            except Exception as exc:  # screenshot is best-effort
+                print(f"Could not capture failure screenshot: {exc}")
+        # Close after the screenshot so the video is finalized.
+        context.close()
 
-        # Close context AFTER screenshot + video finalize
-        if context:
-            try:
-                context.close()
-            except Exception:
-                pass
 
-# Logged-in page fixture
 @pytest.fixture
 def logged_in_page(page):
-    from e2e.pages.login_page import LoginPage
-    from e2e.utils.users import STANDARD_USER
-
     page.goto(BASE_URL)
     LoginPage(page).login(STANDARD_USER)
-
-    yield page
+    return page

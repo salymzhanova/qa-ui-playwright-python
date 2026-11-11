@@ -1,23 +1,25 @@
 import pytest
-from e2e.pages.login_page import LoginPage
-from e2e.utils.users import STANDARD_USER, LOCKED_OUT_USER
-from e2e.pages.locators import LoginPageLocators
+from playwright.sync_api import expect
 
-BASE_URL = "https://www.saucedemo.com/"
-INVENTORY_URL = "https://www.saucedemo.com/inventory.html"
+from e2e.conftest import BASE_URL
+from e2e.pages.locators import LoginPageLocators
+from e2e.pages.login_page import LoginPage
+from e2e.utils.users import LOCKED_OUT_USER, STANDARD_USER
+
+INVENTORY_URL = f"{BASE_URL}inventory.html"
+
 
 @pytest.mark.order(1)
 def test_login(page):
-    login_page = LoginPage(page)
     page.goto(BASE_URL)
-    login_page.login(STANDARD_USER)
-    assert page.url == INVENTORY_URL
+    LoginPage(page).login(STANDARD_USER)
+    expect(page).to_have_url(INVENTORY_URL)
+
 
 @pytest.mark.order(2)
 def test_locked_out_user(page):
-    login_page = LoginPage(page)
     page.goto(BASE_URL)
-    login_page.login(LOCKED_OUT_USER)
+    LoginPage(page).login(LOCKED_OUT_USER)
     error = page.locator(LoginPageLocators.ERROR_MESSAGE)
-    assert error.is_visible()
-    assert "locked out" in error.inner_text().lower()
+    expect(error).to_be_visible()
+    expect(error).to_contain_text("locked out")

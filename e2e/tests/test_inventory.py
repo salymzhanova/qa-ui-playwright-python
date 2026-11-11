@@ -1,47 +1,32 @@
 import pytest
-from e2e.pages.login_page import LoginPage
-from e2e.pages.inventory_page import InventoryPage
-from e2e.utils.users import STANDARD_USER
-from e2e.pages.locators import InventoryPageLocators
+from playwright.sync_api import expect
 
-BASE_URL = "https://www.saucedemo.com/"
-INVENTORY_URL = "https://www.saucedemo.com/inventory.html"
+from e2e.conftest import BASE_URL
+from e2e.pages.inventory_page import InventoryPage
+from e2e.pages.locators import InventoryPageLocators
+from e2e.pages.login_page import LoginPage
+from e2e.utils.users import STANDARD_USER
+
 
 @pytest.mark.order(1)
 def test_first_product_details(page):
-    login_page = LoginPage(page)
     page.goto(BASE_URL)
-    login_page.login(STANDARD_USER)
+    LoginPage(page).login(STANDARD_USER)
 
-    inventory = InventoryPage(page)
-    inventory.open_first_product()
+    InventoryPage(page).open_first_product()
 
-    assert page.locator(InventoryPageLocators.PRODUCT_DETAILS_NAME).is_visible()
+    expect(page.locator(InventoryPageLocators.PRODUCT_DETAILS_NAME)).to_be_visible()
+
 
 @pytest.mark.order(2)
 def test_verify_consistent_product_details(logged_in_page):
     page = logged_in_page
-
     inventory = InventoryPage(page)
+
     first_product_name = inventory.get_first_product_name()
     first_product_price = inventory.get_first_product_price()
+
     inventory.open_first_product()
 
-    detail_name = page.locator(InventoryPageLocators.PRODUCT_DETAILS_NAME).inner_text()
-    detail_price = page.locator(InventoryPageLocators.PRODUCT_DETAILS_PRICE).inner_text()
-
-    assert first_product_name == detail_name
-    assert first_product_price == detail_price
-
-# @pytest.mark.order(3)
-# def test_add_to_cart_increases_count(logged_in_page):
-#     inventory = InventoryPage(logged_in_page)
-
-#     # 1. Capture the state before the action
-#     initial_count = inventory.get_cart_count()
-    
-#     # 2. Perform the action
-#     inventory.add_first_available_item()
-    
-#     # 3. Verify the state change (N + 1)
-#     inventory.verify_cart_count(initial_count + 1)
+    expect(page.locator(InventoryPageLocators.PRODUCT_DETAILS_NAME)).to_have_text(first_product_name)
+    expect(page.locator(InventoryPageLocators.PRODUCT_DETAILS_PRICE)).to_have_text(first_product_price)
