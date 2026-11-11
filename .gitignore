@@ -13,3 +13,10 @@ report.html
 reports/
 test-results/
 playwright-report/
+
+# Test outputs
+report.html
+*.html
+reports/
+test-results/
+playwright-report/
